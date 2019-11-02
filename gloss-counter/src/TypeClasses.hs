@@ -42,6 +42,8 @@ module TypeClasses where
     
 
 
+
+
     class Movement a where 
         movement :: a -> a
 
@@ -62,8 +64,22 @@ module TypeClasses where
     instance Movement Bullet where
         movement bu = bu {shapeB = newLocation shapeB speedB}
 
-    class Collision a where
-        collision :: a -> Objects -> a
 
-    instance Collision SpaceShip where
-        collision = --Health eraf en misschien movement terug
+
+
+    class Collision a where
+    collision :: a -> Objects -> a
+
+    pointDistance :: Point -> Point -> Float
+    pointDistance (Point x1 y1) (Point x2 y2) = sqrt (a * a + b * b)
+        where a = abs(x1 - x2)
+              b = abs(y1 - y2)
+
+    pointInsideShape :: Shape -> Point -> Bool
+    pointInsideShape (Rectangle p1 p2 p3 p4) p = 
+
+    isInside :: Shape -> Shape -> Bool
+    isInside (Circle p1 d1) (Circle p2 d2) = (pointDistance p1 p2) < (d1 + d2)
+    
+    instance Collision EnemySpaceShip where
+        collision sp ob | map (isInside (shapeSP (enemySpaceShip sp))) (player ob) 
