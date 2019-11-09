@@ -17,4 +17,4 @@ main = playIO (InWindow "Counter" (400, 400) (0, 0)) -- Or FullScreen
               step             -- Step function
 
 initialState :: GameState
-initialState = GameState {Objects {initOb (Point 200 0) (Point 0 0) newPlayer, Enemies {[], []}}, Nothing, Settings, 0}
+initialState = GameState {Objects {initOb (Point 200 0) (Point 0 0) newPlayer, Enemies {[], []}}, Nothing, 0, False, False}

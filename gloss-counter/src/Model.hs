@@ -3,7 +3,7 @@
 module Model where
 
 
-data Gamestate = Gamestate {objects :: Objects, action :: Action, elapsedTime :: Float, gameOver :: Bool}
+data Gamestate = Gamestate {objects :: Objects, action :: Action, elapsedTime :: Float, gameOver :: Bool, gamePaused :: Bool}
 data Objects = Objects {player :: Player, enemies :: Enemies}
 
 data Player = Player {spaceShip :: SpaceShip, bulletsPL :: [Bullet], maxSpeed :: Float}
