@@ -21,7 +21,12 @@ input :: Event -> GameState -> IO GameState
 input e gstate = return (inputKey e gstate)
 
 inputKey :: Event -> GameState -> GameState
-inputKey (EventKey (Char c) _ _ _) gstate
-  = -- If the user presses a character key, show that one
-    gstate { buttonPressed = c }
-inputKey _ gstate = gstate -- Otherwise keep the same
+inputKey (EventKey (Char c) _ _ _) gstate | c == 'w'  = gstate {action = Move (Point 0 1)} 
+                                          | c == 'a'  = gstate {action = Move (Point -1 0)}
+                                          | c == 's'  = gstate {action = Move (Point 0 -1)}
+                                          | c == 'd'  = gstate {action = Move (Point 1 0)}
+                                          | c == 'v'  = gstate {action = Shoot}
+                                          | c == 'p'  = gstate {action = Pause}
+                                          | otherwise = gstate {action = Nothing}
+inputKey (EventKey (MouseButton m) _ _ _) gstate = gstate {action = Nothing}
+inputKey _ gstate = gstate {action = Nothing}

@@ -3,23 +3,19 @@
 module Model where
 
 
-<<<<<<< HEAD
-data Gamestate = Gamestate {objects :: Objects, buttonPressed :: Action, elapsedTime :: Float}
-=======
-data Gamestate = Gamestate {objects :: Objects, buttonPressed :: ,settings :: Settings, elapsedTime :: Float, gameOver :: Bool}
->>>>>>> origin/master
+data Gamestate = Gamestate {objects :: Objects, action :: Action, settings :: Settings, elapsedTime :: Float, gameOver :: Bool}
 data Objects = Objects {player :: Player, enemies :: Enemies}
 
-data Player = Player {spaceShip :: SpaceShip, bulletsPL :: [Bullet], action :: Action}
+data Player = Player {spaceShip :: SpaceShip, bulletsPL :: [Bullet], maxSpeed :: Float}
 data Enemies = Enemies {meteorites :: [Meteorite], spaceShips :: [EnemySpaceShip]}
 data Meteorite = Meteorite {shapeM :: Shape, healthM :: Float, speedM :: Point}
 data SpaceShip = SpaceShip {shapeSP :: Shape, healthSP :: Float, speedSP :: Point, fireRate :: Float, lastFire :: Float}
 data EnemySpaceShip = EnemySpaceShip {enemySpaceShip :: SpaceShip, bulletsEN :: [Bullet]}
-data Bullet = Bullet {shapeB :: Shape, healthB :: Float, speedB :: Point}
+data Bullet = Bullet {shapeB :: Shape, healthB :: Float, speedB :: Point, friendly :: Bool}
 
-data Action = Shoot Action
-            | Move Point Action
-            | Pause Action
+data Action = Shoot 
+            | Move Point 
+            | Pause 
             | Nothing
 
 data Shape = Rectangle Point Point Point Point        --Assumed to be parralel with x and y axis
