@@ -11,7 +11,7 @@ view = return . viewPure
 viewPure :: GameState -> Picture
 viewPure gstate
 {-| GAMEOVER?-}  
-  | otherwise = pictures [  pictures (map draw (objects gstate))]
+  | otherwise = pictures [pictures (map draw (objects gstate))]
                             
 
 

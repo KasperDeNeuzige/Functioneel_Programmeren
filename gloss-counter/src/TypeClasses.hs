@@ -25,15 +25,15 @@ instance Update Objects where
     updateEvent e g ob = ob {player = updateEvent e g (player ob), enemies = update g (enemies ob)}
 
 instance Update Player where
-    updateEvent Shoot g pl@Player {spaceShip = sp, bullets = bt} | (lastFire sp + fireRate sp > (elapsedTime g) = pl{sp = sp{lastFire = elapsedTime g, speedSP = Point 0 0}, bt = (update g (InitOb (shapeToPoint (shapeSP sp)) (bulletSpeed pl) newBullet)) : (map (update g) bt)}
-                                                                 | otherwise                                    = pl{bt = map (update g) bt}
-    updateEvent (Move (Point x y)) g pl@Player {spaceShip = sp}                                                                         = pl{sp = sp{speedSP = Point (x*maxSpeed pl)(y*maxSpeed pl)}}
+    updateEvent Shoot g pl@Player {spaceShip = sp, bulletsPL = bt} | (lastFire sp + fireRate sp) > (elapsedTime g) = pl {spaceShip = sp {lastFire = elapsedTime g, speedSP = Point 0 0}, bulletsPL = (update g (InitOb (shapeToPoint (shapeSP sp)) (bulletSpeed pl) newBullet)) : (map (update g) bt)}
+                                                                   | otherwise                                    = pl {bt = map (update g) bt}
+    updateEvent (Move (Point x y)) g pl@Player {spaceShip = sp}                                                   = pl {sp = sp{speedSP = Point (x*maxSpeed pl)(y*maxSpeed pl)}}
 
 instance Update Enemies where
     update g en = en {spaceShips = map (update g) (spaceShips en), meteorites = map (update g) (meteorites en)}
 
 instance Update EnemySpaceShip where
-    update g ensp@EnemySpaceShip {enemySpaceShip = sp, bulletsEN = bt} | lastFire sp + fireRate sp > elapsedTime g = ensp {sp {lastFire = elapsedTime g}, bt = (update g (InitOb (shapeToPoint (shapeSP sp)) (bulletSpeed ensp) newBullet)) : (map (update g) bt)}
+    update g ensp@EnemySpaceShip {enemySpaceShip = sp, bulletsEN = bt} | lastFire sp + fireRate sp > elapsedTime g = ensp {spaceShip = sp {lastFire = elapsedTime g}, bt = (update g (InitOb (shapeToPoint (shapeSP sp)) (bulletSpeed ensp) newBullet)) : (map (update g) bt)}
                                                                        | otherwise                                 = ensp {bt = map (update g) bt}
 
 instance Update Meteorite where
@@ -103,17 +103,20 @@ isInside r@(Rectangle p1 p2 p3 p4) (Triangle q1 q2 q3)     = any [pointInsideSha
 isInside (Triangle p1 p2 p3) (Triangle q1 q2 q3)           = undefined
 isInside p q                                               = isInside q p
 
+instance Collision Objects where
+    collision ob ob = en {player = collision ob (player ob), bulletsPL = collision ob (enemies ob)}
+
 instance Collision Enemies where
-    collision ob en = en {meteorites = filter isJust (removeIfDead (collision (meteorites en))), spaceShips = filter isJust (removeIfDead (collision (spaceShips en)))}
+    collision ob en = en {meteorites = filter isJust (removeIfDead (collision ob (meteorites en))), spaceShips = filter isJust (removeIfDead (collision ob (spaceShips en)))}
     
 instance Collision EnemySpaceShip where
-    collision ob sp | and map (isInside (shapeSP (enemySpaceShip sp))) (shapeSP (spaceShip (player ob))) : (map shapeB(bullets(player ob))) = sp {enemySpaceShip = enemySpaceShip sp{healthSP = (healthSp (enemySpaceShip sp)) - 1}}
+    collision ob sp | or map (isInside (shapeSP (enemySpaceShip sp))) (shapeSP (spaceShip (player ob))) : (map shapeB(bullets(player ob)))  = sp {enemySpaceShip = enemySpaceShip sp{healthSP = (healthSp (enemySpaceShip sp)) - 1}}
                     | otherwise                                                                                                             = sp
 instance Collision Player where
-    collision ob pl | and map (isInside (shapeSP (spaceShip pl))) (map shapeM (meteorites (enemies ob)) ++ (map shapeSP(enemySpaceShip( spaceShips (enemies ob))))) = pl {spaceShip = spaceShip pl {healthSP = (healthSP (spaceShip pl)) - 1}}
-                    | otherwise                                                                                                                                     = pl
+    collision ob pl | or map (isInside (shapeSP (spaceShip pl))) (map shapeM (meteorites (enemies ob)) ++ (map shapeSP (enemySpaceShip (spaceShips (enemies ob)))))  = pl {spaceShip = spaceShip pl {healthSP = (healthSP (spaceShip pl)) - 1}, bulletsSP = filter isJust (map removeIfDead (map (collision ob) bulletsPL))}
+                    | otherwise                                                                                                                                      = pl
 instance Collision Meteorite where
-    collision ob mt | and map (isInside (shapeM mt)) ((shapeSP (spaceShip (player ob))) : (shapeB (bullets (player ob))) = mt {healthMT = (healthMT mt) - 1}
+    collision ob mt | or map (isInside (shapeM mt)) ((shapeSP (spaceShip (player ob))) : (shapeB (bullets (player ob)))) = mt {healthMT = (healthMT mt) - 1}
                     | otherwise                                                                                          = mt
 instance Collision Bullet where 
     collision ob bt | isInside (shapeM bt) (shapeSP (spaceShip (player ob))) = bt {healthB = (healthB bt) - 1}
@@ -128,7 +131,7 @@ removeIfDead :: a -> Maybe a
 
 instance RemoveDead Player where
     removeIfDead pl | removeIfDead (spaceShip pl) == Nothing = Nothing
-                    | otherwise                              = Just (pl {bullets = filter isJust (removeIfDead bullets pl)}
+                    | otherwise                              = Just (pl {bulletsPL = filter isJust (removeIfDead bulletsPL pl)})
 
 instance RemoveDead EnemySpaceShip where
     removeIfDead en | removeIfDead (enemySpaceShip en) == Nothing = Nothing
@@ -180,8 +183,8 @@ pointToRectangle center height width = Rectangle (addPoints center (Point halfHe
           halfWidth  = width/2
 
 instance InitOb Bullet where 
-initialize pos speed@(Point x y) bt | y > 0 = bt {shapeB = Shape pos 10, healthB = 1, speedB = speed, False}
-                                            = bt {shapeB = Shape pos 10, healthB = 1, speedB = speed, True}
+initialize pos speed@(Point x y) bt | y > 0     = bt {shapeB = Shape pos 10, healthB = 1, speedB = speed, team = Hostile}
+                                    | otherwise = bt {shapeB = Shape pos 10, healthB = 1, speedB = speed, team = Friendly}
 
 instance InitOb Meteorite where
 initialize pos speed mt = mt {shapeM = Shape pos 10, healthM = 1, speedM = speed}
