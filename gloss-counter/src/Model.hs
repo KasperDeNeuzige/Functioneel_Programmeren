@@ -3,7 +3,11 @@
 module Model where
 
 
+<<<<<<< HEAD
 data Gamestate = Gamestate {objects :: Objects, buttonPressed :: Action, elapsedTime :: Float}
+=======
+data Gamestate = Gamestate {objects :: Objects, buttonPressed :: ,settings :: Settings, elapsedTime :: Float, gameOver :: Bool}
+>>>>>>> origin/master
 data Objects = Objects {player :: Player, enemies :: Enemies}
 
 data Player = Player {spaceShip :: SpaceShip, bulletsPL :: [Bullet], action :: Action}
