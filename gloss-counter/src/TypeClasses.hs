@@ -19,15 +19,17 @@ class Update a where
     updateEvent :: Action -> Gamestate -> a -> a
     
 instance Update Gamestate where
-    updateEvent e g gs = gs {objects = collision (objects gs) (movement (updateEvent e gs (objects gs)))} -- removeDead (collision (movement objects))
+    updateEvent e _ gs {_ _ _ _ True} = gs {gamePaused = not (a == Pause)}             -- If gamePaused is True, gamePaused wordt 
+    updateEvent e g gs = otherwise    = gs {objects = collision (objects gs) (movement (updateEvent e gs (objects gs)))} -- removeDead (collision (movement objects))
     
 instance Update Objects where
     updateEvent e g ob = ob {player = updateEvent e g (player ob), enemies = update g (enemies ob)}
 
 instance Update Player where
     updateEvent Shoot g pl@Player {spaceShip = sp, bulletsPL = bt} | (lastFire sp + fireRate sp) > (elapsedTime g) = pl {spaceShip = sp {lastFire = elapsedTime g, speedSP = Point 0 0}, bulletsPL = (update g (InitOb (shapeToPoint (shapeSP sp)) (bulletSpeed pl) newBullet)) : (map (update g) bt)}
-                                                                   | otherwise                                    = pl {bt = map (update g) bt}
-    updateEvent (Move (Point x y)) g pl@Player {spaceShip = sp}                                                   = pl {sp = sp{speedSP = Point (x*maxSpeed pl)(y*maxSpeed pl)}}
+                                                                   | otherwise                                     = pl {bt = map (update g) bt}
+    updateEvent (Move (Point x y)) g pl@Player {spaceShip = sp}                                                    = pl {sp = sp{speedSP = Point (x*maxSpeed pl)(y*maxSpeed pl)}}
+    updateEvent Pause g pl                                                                                         = g {gamePaused = True}
 
 instance Update Enemies where
     update g en = en {spaceShips = map (update g) (spaceShips en), meteorites = map (update g) (meteorites en)}
@@ -174,8 +176,10 @@ newEnemySpaceShip = EnemySpaceShip newSpaceShip []
 class InitOb a where
 initialize :: Point -> Point -> a -> a 
 
+
+
 startingPosition :: Point
-startingPosition = undefined-- Random starting position on top/right of screen
+startingPosition = randomR getStdGen -- Random starting position on top/right of screen
 
 pointToRectangle :: Point -> Float -> Float -> Rectangle
 pointToRectangle center height width = Rectangle (addPoints center (Point halfHeight (negate halfWidth))) (addPoints center (Point halfHeight halfWidth)) (addPoints center (Point (negate halfHeight) halfWidth) (addPoints center (Point halfHeight (negate halfWidth))))

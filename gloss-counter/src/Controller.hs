@@ -13,7 +13,7 @@ step :: Float -> GameState -> IO GameState
 step secs gstate
   | elapsedTime gstate + secs > nO_SECS_BETWEEN_CYCLES = do randomNumber <- randomIO
                                                             let newNumber = abs randomNumber `mod` 10
-                                                            return $ GameState (ShowANumber newNumber) 0
+                                                            return (gstate{elapsedTime = elapsedTime gstate + secs})
   | otherwise                                          = return (gstate {elapsedTime = elapsedTime gstate + secs})
 
 -- | Handle user input
