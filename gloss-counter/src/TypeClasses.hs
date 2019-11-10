@@ -15,28 +15,29 @@ import Data.Maybe
 -- Draw
 
 class Update a where
-    update :: Gamestate -> a -> a 
-    updateEvent :: Action -> Gamestate -> a -> a
+    step :: Gamestate -> a -> a 
+    input :: Action -> Gamestate -> a -> a
     
 instance Update Gamestate where
-    updateEvent e _ gs {_ _ _ _ True} = gs {gamePaused = not (a == Pause)}             -- If gamePaused is True, gamePaused wordt 
-    updateEvent e g gs = otherwise    = gs {objects = collision (objects gs) (movement (updateEvent e gs (objects gs)))} -- removeDead (collision (movement objects))
+    input e _ gs {_ _ _ _ True} = gs {gamePaused = not (a == Pause)}             -- If gamePaused is True, gamePaused wordt 
+    input e g gs                = gs {objects = input e gs (objects gs)} -- removeDead (collision (movement objects))
+    step g gs                   = gs {objects = collision (objects gs) (movement (objects gs))}
     
 instance Update Objects where
-    updateEvent e g ob = ob {player = updateEvent e g (player ob), enemies = update g (enemies ob)}
+    input e g ob = ob {player = input e g (player ob)}
 
 instance Update Player where
-    updateEvent Shoot g pl@Player {spaceShip = sp, bulletsPL = bt} | (lastFire sp + fireRate sp) > (elapsedTime g) = pl {spaceShip = sp {lastFire = elapsedTime g, speedSP = Point 0 0}, bulletsPL = (update g (InitOb (shapeToPoint (shapeSP sp)) (bulletSpeed pl) newBullet)) : (map (update g) bt)}
-                                                                   | otherwise                                     = pl {bt = map (update g) bt}
-    updateEvent (Move (Point x y)) g pl@Player {spaceShip = sp}                                                    = pl {sp = sp{speedSP = Point (x*maxSpeed pl)(y*maxSpeed pl)}}
-    updateEvent Pause g pl                                                                                         = g {gamePaused = True}
+    input Shoot g pl@Player {spaceShip = sp, bulletsPL = bt} | (lastFire sp + fireRate sp) > (elapsedTime g) = pl {spaceShip = sp {lastFire = elapsedTime g, speedSP = Point 0 0}}
+                                                             | otherwise                                     = pl {sp = sp {speedSP = Point 0 0}}
+    input (Move (Point x y)) g pl@Player {spaceShip = sp}                                                    = pl {sp = sp{speedSP = Point (x*maxSpeed pl)(y*maxSpeed pl)}}
+    input Pause g pl                                                                                         = g {gamePaused = True}
 
 instance Update Enemies where
-    update g en = en {spaceShips = map (update g) (spaceShips en), meteorites = map (update g) (meteorites en)}
+    step g en = en {spaceShips = map (step g) (spaceShips en), meteorites = map (step g) (meteorites en)}
 
 instance Update EnemySpaceShip where
-    update g ensp@EnemySpaceShip {enemySpaceShip = sp, bulletsEN = bt} | lastFire sp + fireRate sp > elapsedTime g = ensp {spaceShip = sp {lastFire = elapsedTime g}, bt = (update g (InitOb (shapeToPoint (shapeSP sp)) (bulletSpeed ensp) newBullet)) : (map (update g) bt)}
-                                                                       | otherwise                                 = ensp {bt = map (update g) bt}
+    step g ensp@EnemySpaceShip {enemySpaceShip = sp, bulletsEN = bt} | lastFire sp + fireRate sp > elapsedTime g = ensp {spaceShip = sp {lastFire = elapsedTime g}, bt = (step g (InitOb (shapeToPoint (shapeSP sp)) (bulletSpeed ensp) newBullet)) : (map (step g) bt)}
+                                                                     | otherwise                                 = ensp {bt = map (step g) bt}
 
 instance Update Meteorite where
     update g mt = mt

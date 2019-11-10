@@ -11,7 +11,7 @@ import System.Random
 -- | Handle one iteration of the game
 step :: Float -> GameState -> IO GameState
 step secs gstate
-  | elapsedTime gstate + secs > nO_SECS_BETWEEN_CYCLES = do randomNumber <- randomIO
+  | elapsedTime gstate + secs > nO_SECS_BETWEEN_CYCLES = do randomPos <- randomIO
                                                             let newNumber = abs randomNumber `mod` 10
                                                             return (gstate{elapsedTime = elapsedTime gstate + secs})
   | otherwise                                          = return (gstate {elapsedTime = elapsedTime gstate + secs})
